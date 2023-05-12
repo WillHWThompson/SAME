@@ -1,19 +1,12 @@
-using DrWatson
-@quickactivate "tmp"
+import Pkg; Pkg.activate(pwd()); Pkg.instantiate()
+using DrWatson, Revise
 
-# Here you may include files from the source directory
-include(srcdir("dummy_src_file.jl"))
+@quickactivate :SAME
 
-println(
-"""
-Currently active project is: $(projectname())
+#include(srcdir("SAME.jl"))
 
-Path of active project: $(projectdir())
+using SAME
 
-Have fun with your new project!
 
-You can help us improve DrWatson by opening
-issues on GitHub, submitting feature requests,
-or even opening your own Pull Requests!
-"""
-)
+SAME.greet()
+SAME.hello()
