@@ -1,5 +1,10 @@
 # tmp
 
+# Spin Models With Approximate Master Equations(SAME) 
+
+This codebase implementd and simulated the voter model and other spin models using approximate master equations on higher order networks. 
+
+
 This code base is using the [Julia Language](https://julialang.org/) and
 [DrWatson](https://juliadynamics.github.io/DrWatson.jl/stable/)
 to make a reproducible scientific project named
