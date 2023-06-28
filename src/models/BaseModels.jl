@@ -6,7 +6,9 @@ import Base.@kwdef
 
 abstract type  SpinModel end
 
-mutable struct SpinNetwork
+abstract type SpinNetwork end
+
+mutable struct SpinNetworkSimpleGraph <: SpinNetwork
     """
     SpinNetwork a datastrcture that contains a network of spins
     inputs:
@@ -19,6 +21,19 @@ mutable struct SpinNetwork
     spin_meta_data::Vector{Any}
 end
 
+mutable struct SpinNetworkHyperGraph <: SpinNetwork
+    """
+    SpinNetwork a datastrcture that contains a network of spins
+    inputs:
+        spin_vals: a vector with length equal to the number of nodes in the network assigning a spin to each node
+        g: a Hypergraph structure that is used in the network
+        spin_meta_data: a vector of dictionaries containing any spin specific meta-data
+    """
+    spin_vals::Vector{Int64}
+    g::Graph
+    hypergraph::Hypergraph
+    spin_meta_data::Vector{Any}
+end
 
 function init_spin_network(network;spin_pmf_dict= Dict(-1 =>1/2, 1 => 1/2),spin_meta_data = Vector())
     """

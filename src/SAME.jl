@@ -5,14 +5,16 @@ using Reexport
 @reexport using Revise
 
 export models,utils,graphs
-
- include("models/BaseModels.jl")
- include("models/IsingModel.jl")
- include("models/VoterModel.jl")
+export Hypergraph,BipartiteGraph
 
  println("Including Graphs")
  include("graphs/Hypergraph.jl")
  include("graphs/SBM.jl")
+
+
+ include("models/BaseModels.jl")
+ include("models/IsingModel.jl")
+ include("models/VoterModel.jl")
 
  include("utils/ModelUtils.jl")
  println("All files included")
