@@ -22,10 +22,7 @@ struct BipartiteGraph <: VoterModelGraph
 end
 
 
-
-
-
-
+#-----------------
 ## Construtors
 #-----------------
 
@@ -48,9 +45,94 @@ end
 
 function hypergraph(N_groups::Int,N_inds::Int,p_dist,g_dist)
     bp_graph=bipartite_graph(N_groups,N_inds,p_dist,g_dist)
-    return 
+    hg = bipartite_to_hypergraph(bp_graph)
+    return hg
 
 end
+
+
+## Simple Graph 
+#-----------------
+function simple_graph(edge_list::Vector{Tuple{Int64, Int64}})
+    """
+    simple_graph: make a Graphs.jl SimpleGraph from an edge list
+    inputs: 
+        edge_list: a list of edges where each edge is a tuple of ints, each int refers to a verticie inde
+    returns: 
+        graph: a SimpleGraph of the edge_list
+    """
+    graph = SimpleGraph(length(unique(vcat(unzip(edge_list)...))))
+
+    for edge in edge_list
+        add_edge!(graph,edge[1],edge[2])
+    end
+    return graph
+end
+
+function simple_graph(hgraph::Hypergraph)
+    """
+    simple_graph: make a Graphs.jl SimpleGraph from an edge list
+    inputs: 
+        hgraph::HyperGraph: a Hypergraph edge list
+    returns: 
+        graph: a SimpleGraph of the edge_list
+    """
+    hedge = map(hyperedge -> combinations(hyperedge,2) |> collect,values(hgraph.edge_list))  
+    hedge = vcat(hedge...) 
+    hedge = map(x->Tuple(x),hedge)
+    return SAME.simple_graph(hedge)
+end
+
+function simple_graph(bp_graph::BipartiteGraph)
+    """
+    simple_graph: make a Graphs.jl SimpleGraph from an edge list
+    inputs: 
+        bp_graph::BipartiteGraph: a Bipartite Graph Object 
+    returns: 
+        graph: a SimpleGraph of the edge_list
+    """
+    edge_list = bp_graph.edge_list 
+    graph = SimpleGraph(length(unique(vcat(unzip(edge_list)...))))
+
+    for edge in edge_list
+        add_edge!(graph,edge[1],edge[2])
+    end
+    return graph
+end
+
+
+function make_simple_graph(N_groups::Int,N_inds::Int,p_dist,g_dist)
+    """
+    make_hypergraph() - given a set of paramters generate a set a hypergraph consisting of cliques and individuals,
+    input: 
+        N_groups::Int - the number of groups to generate
+        N_inds:: the number of individuals to generate(may be less than this value)
+        p_dist::Distributions.jl distribution, the distribution of clique sizes 
+        g_dist::Distributions.jl distribution, the distribution of clique sizes
+    returns: 
+        graph::SimpleGraph, a bipartite graph stored as a unipartite graph with nodes and edges
+        my_vertices::Dict{Int64,Int64}, a dictionary with verticie labels and attributes, a vert has an attribute 1 if it is a clique and 2 if it is an individual
+    """
+    my_edges,vertex_attributes = generate_hypergraph_bipartite_edge_list(N_groups,N_inds,p_dist,g_dist)
+    #my_edges = map(x->(Int64(x[1]),Int64(x[2])),my_edges)
+    graph = simple_graph(my_edges)
+    return graph,vertex_attributes
+end
+
+
+function make_unipartite_community_graph(N_groups::Int,N_inds::Int,p_dist,g_dist)
+    # bipartite_graph,vertex_attributes = make_hypergraph(N_groups,N_inds,p_dist,g_dist)#get a bi-partite projection
+    edge_list,vertex_attributes = SAME.generate_hypergraph_bipartite_edge_list(N_groups,N_inds,p_dist,g_dist)
+    bipartite_graph,vertex_attributes = SAME.make_hypergraph(N_groups,N_inds,p_dist,g_dist) 
+    unipartite_graph =  unipartite_projection(bipartite_graph,vertex_attributes,1)
+
+    hypergraph_info = (hypergraph = bipartite_graph,edge_list = edge_list,vertex_attributes = vertex_attributes) 
+    return unipartite_graph,hypergraph_info
+end
+
+
+##Generators
+##----------
 
 function generate_hypergraph_bipartite_edge_list(N_groups::Int,N_inds::Int,p_dist,g_dist)
     """
@@ -95,6 +177,8 @@ function generate_hypergraph_bipartite_edge_list(N_groups::Int,N_inds::Int,p_dis
 
 
 
+##Converters
+#----------
 function bipartite_to_hypergraph(bp_graph::BipartiteGraph;bipartite_set::Int64 = 1)
 
     """
@@ -109,57 +193,12 @@ function bipartite_to_hypergraph(bp_graph::BipartiteGraph;bipartite_set::Int64 =
     bipartite_set_vertices = get_bipartite_vertices_type(bp_graph,bipartite_set)
     non_bipartite_vertices = setdiff(Set(bp_graph.vertices),Set(bipartite_set_vertices)) 
     #hyper_edge_list = Dict(hyper_edge => map(x -> x[2], filter(v -> v[1] == hyper_edge, edge_list)) for hyper_edge in bipartite_set_bp_graph.vertices)
-    hyper_edge_list = Dict(hyper_edge => map(x -> x[2], filter(v -> v[1] == hyper_edge, edge_list)) for hyper_edge in bipartite_set_vertices)
-    hgraph = Hypergraph(non_bipartite_set_bp_graph.vertices,bipartite_set_bp_graph.vertices,hyper_edge_list)
+    hyper_edge_list = Dict(hyper_edge => map(x -> x[2], filter(v -> v[1] == hyper_edge, bp_graph.edge_list)) for hyper_edge in non_bipartite_vertices)
+    #@infiltrate
+    hgraph = Hypergraph(bipartite_set_vertices,non_bipartite_vertices,hyper_edge_list)
     return hgraph
 end
 
-function simple_graph(edge_list::Vector{Tuple{Int64, Int64}})
-    """
-    simple_graph: make a Graphs.jl SimpleGraph from an edge list
-    inputs: 
-        edge_list: a list of edges where each edge is a tuple of ints, each int refers to a verticie inde
-    returns: 
-        graph: a SimpleGraph of the edge_list
-    """
-    graph = SimpleGraph(length(unique(vcat(unzip(edge_list)...))))
-
-    for edge in edge_list
-        add_edge!(graph,edge[1],edge[2])
-    end
-    return graph
-end
-
-function simple_graph(hgraph::Hypergraph)
-    """
-    simple_graph: make a Graphs.jl SimpleGraph from an edge list
-    inputs: 
-        hgraph::HyperGraph: a Hypergraph edge list
-    returns: 
-        graph: a SimpleGraph of the edge_list
-    """
-    hedge = map(hyperedge -> combinations(hyperedge,2) |> collect,values(hgraph.edge_list))  
-    hedge = vcat(hedge...) 
-    hedge = map(x->Tuple(x),hedge)
-    return SAME.simple_graph_from_edge_list(hedge)
-end
-
-function simple_graph(bp_graph::BipartiteGraph)
-    """
-    simple_graph: make a Graphs.jl SimpleGraph from an edge list
-    inputs: 
-        bp_graph::BipartiteGraph: a Bipartite Graph Object 
-    returns: 
-        graph: a SimpleGraph of the edge_list
-    """
-    edge_list = bp_graph.edge_list 
-    graph = SimpleGraph(length(unique(vcat(unzip(edge_list)...))))
-
-    for edge in edge_list
-        add_edge!(graph,edge[1],edge[2])
-    end
-    return graph
-end
 
 
 function unipartite_projection(graph::SimpleGraph, vertex_attributes::Dict{Int64,Int64}, bipartite_set::Int)
@@ -209,35 +248,6 @@ function unipartite_projection(hgraph::Hypergraph)
     return SAME.simple_graph(hedge)
 end
 
-function make_simple_graph(N_groups::Int,N_inds::Int,p_dist,g_dist)
-    """
-    make_hypergraph() - given a set of paramters generate a set a hypergraph consisting of cliques and individuals,
-    input: 
-        N_groups::Int - the number of groups to generate
-        N_inds:: the number of individuals to generate(may be less than this value)
-        p_dist::Distributions.jl distribution, the distribution of clique sizes 
-        g_dist::Distributions.jl distribution, the distribution of clique sizes
-    returns: 
-        graph::SimpleGraph, a bipartite graph stored as a unipartite graph with nodes and edges
-        my_vertices::Dict{Int64,Int64}, a dictionary with verticie labels and attributes, a vert has an attribute 1 if it is a clique and 2 if it is an individual
-    """
-    my_edges,vertex_attributes = generate_hypergraph_bipartite_edge_list(N_groups,N_inds,p_dist,g_dist)
-    #my_edges = map(x->(Int64(x[1]),Int64(x[2])),my_edges)
-    graph = simple_graph(my_edges)
-    return graph,vertex_attributes
-end
-
-
-function make_unipartite_community_graph(N_groups::Int,N_inds::Int,p_dist,g_dist)
-    # bipartite_graph,vertex_attributes = make_hypergraph(N_groups,N_inds,p_dist,g_dist)#get a bi-partite projection
-    edge_list,vertex_attributes = SAME.generate_hypergraph_bipartite_edge_list(N_groups,N_inds,p_dist,g_dist)
-    bipartite_graph,vertex_attributes = SAME.make_hypergraph(N_groups,N_inds,p_dist,g_dist) 
-    unipartite_graph =  unipartite_projection(bipartite_graph,vertex_attributes,1)
-
-    hypergraph_info = (hypergraph = bipartite_graph,edge_list = edge_list,vertex_attributes = vertex_attributes) 
-    return unipartite_graph,hypergraph_info
-end
-
 # function plot_graph(graph;ax =nothing,colors = nothing,layout = nothing)
 #     graphplot!(ax,graph,node_color = colors)
 # end
@@ -246,6 +256,13 @@ end
 #Utilities 
 #---------
 function get_bipartite_vertices_type(bp_graph::BipartiteGraph,bipartite_set = 1)
+    """
+    get_bipartite_vertices_type() - returns one of the two sets of verticies in a bipartite graph
+
+    """
     bipartite_set_vertices = Set(filter(v -> bp_graph.vertex_attributes[v] == bipartite_set, bp_graph.vertices))
     return bipartite_set_vertices
 end
+
+num_vert(g::Graph)  = nv(g)
+num_vert(hg::Hypergraph) = nv(simple_graph(hg))
