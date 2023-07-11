@@ -10,18 +10,34 @@ function test2()
     println("test")
 end
 
-@kwdef mutable struct VoterModel  <: SpinModel
+
+abstract type VoterModel <: SpinModel end
+
+#mutable struct LinearVoterModel{S <: SpinNetwork}  <: SpinModel
+mutable struct LinearVoterModel{S <: SpinNetwork} 
 """
 VoterModel: A strcut to store a voter model 
 inputs: 
     spin_network::SpinNetwork - a spin network topology with inital values and a graph
     update_rule::Function - the rule used to update the graph
 """
-    spin_network::SpinNetwork
+    spin_network::S
     update_rule::Function
 end
 
-function voter_model_update(my_voter_model::VoterModel)
+""""
+----------------------
+Constructors
+---------------------
+"""
+
+function linear_voter_model(spin_model::SpinNetwork)
+    return LinearVoterModel(spin_model,linear_voter_model)
+end
+
+
+
+function linear_voter_model_update(my_voter_model::VoterModel)
     """
     An implementation of the voter model update rule, each generation a single new spin is chosen to update
     input: 
@@ -55,4 +71,18 @@ function get_magnetization(my_voter_model::VoterModel)
     """
     M = sum(my_voter_model.spin_network.spin_vals)/length(my_voter_model.spin_network.spin_vals)
     return M
+end
+
+
+function run_model(d::Dict)
+    @unpack N_inds, N_p, N_groups, M_p, N_steps = d
+    p_dist = Binomial(N_inds,N_p)                                              
+    g_dist = Binomial(N_groups,M_p)
+    hg = hypergraph(N_groups,N_inds,p_dist,g_dist)
+    sn = init_spin_network(hg)
+    vm = linear_voter_model(sn)
+    for i in 1:N_steps
+        vm.update_rule(vm.spin_network)
+    end
+    calculate_hyperedge_spin_dist(sn)
 end
