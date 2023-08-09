@@ -80,7 +80,8 @@ function simple_graph(hgraph::Hypergraph)
     hedge = map(hyperedge -> combinations(hyperedge,2) |> collect,values(hgraph.edge_list))  
     hedge = vcat(hedge...) 
     hedge = map(x->Tuple(x),hedge)
-    return SAME.simple_graph(hedge)
+    @infiltrate 
+    return simple_graph(hedge)
 end
 
 function simple_graph(bp_graph::BipartiteGraph)
@@ -123,7 +124,7 @@ end
 function make_unipartite_community_graph(N_groups::Int,N_inds::Int,p_dist,g_dist)
     # bipartite_graph,vertex_attributes = make_hypergraph(N_groups,N_inds,p_dist,g_dist)#get a bi-partite projection
     edge_list,vertex_attributes = SAME.generate_hypergraph_bipartite_edge_list(N_groups,N_inds,p_dist,g_dist)
-    bipartite_graph,vertex_attributes = SAME.make_hypergraph(N_groups,N_inds,p_dist,g_dist) 
+    bipartite_graph,vertex_attributes = hypergraph(N_groups,N_inds,p_dist,g_dist) 
     unipartite_graph =  unipartite_projection(bipartite_graph,vertex_attributes,1)
 
     hypergraph_info = (hypergraph = bipartite_graph,edge_list = edge_list,vertex_attributes = vertex_attributes) 
@@ -154,15 +155,20 @@ function generate_hypergraph_bipartite_edge_list(N_groups::Int,N_inds::Int,p_dis
         p_n = rand(p_dist)#select the number of chairs in clique i
         chairs = vcat(chairs,[i for j in 1:p_n])#add p_n chairs belonging to clique i
     end
+    
+
 
     for i in 1:(N_inds)
-            g_m = rand(g_dist)+1#select the number of chairs in clique i
+            #g_m = rand(g_dist)+1#select the number of butts in clique i
+            g_m = rand(g_dist)#select the number of butts in clique i, NOTE may have to fix later if 0s pop up
             g_m = length(butts)+g_m <= length(chairs) ? g_m : length(chairs)-length(butts)#pull a random length or select a length to make the two lists equal if we are bout to go over 
             butts = vcat(butts,[i for j in 1:g_m])#add g_m butts to individuals i
         end
-
-    #butts = butts.+ N_groups#shfit the indicies so the group and individual IDs do not overlap
+    
+    #@infiltrate
     chairs = chairs.+N_inds
+
+    #@infiltrate
     #shuffle the lists    
     chairs_shuff = shuffle(chairs)
     butts_shuff = shuffle(butts)

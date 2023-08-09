@@ -36,6 +36,8 @@ mutable struct SpinNetworkHyperGraph <: SpinNetwork
 end
 
 
+
+
 ##Constructors
 ##-----------
 
@@ -73,7 +75,7 @@ end
 
 
 
-function get_spin_dist(my_vm,my_hypergraph,my_vertex_attribues)
+function get_spin_dist(my_vm,my_hypergraph::Hypergraph,my_vertex_attribues)
     bipartite_values = values(my_vertex_attribues)
     my_N_individuals = count(x->x==1,bipartite_values)
     my_N_groups = count(x->x==2,bipartite_values)
@@ -92,14 +94,15 @@ function get_spin_dist(my_vm,my_hypergraph,my_vertex_attribues)
 end
 
 
-function run_model(my_model::SpinModel;num_steps = 1000)
+#function run_model(my_model::SpinModel;num_steps = 1000) #change back when you get wifi, what is the problem
+function run_model(my_model;num_steps = 1000)
     println(num_steps)
     history = map(x ->my_model.update_rule(my_model),1:num_steps)
     return history
 end
 
 
-function calculate_hyperedge_spin_dist(my_sn::SpinNetworkHyperGraph)
+function calculate_hyperedge_spin_dist(my_sn::SpinNetworkHyperGraph;min_edge_size = 0)
     """
     calculate_hyperegde_spin_dist() - given a 
 
@@ -115,8 +118,22 @@ function calculate_hyperedge_spin_dist(my_sn::SpinNetworkHyperGraph)
     hyperedge_u = trunc.(Int,hyperedge_u)#round to an int
 
     #DataFrame(Dict(:hyperedge_index => hyperedge_index, :hyperedge_u => hyperedge_u,:hyperedge_size => hyperedge_size ))
-    Dict(:hyperedge_index => hyperedge_index, :hyperedge_u => hyperedge_u,:hyperedge_size => hyperedge_size )
+    spin_dist_dict = Dict(:hyperedge_index => hyperedge_index, :hyperedge_u => hyperedge_u,:hyperedge_size => hyperedge_size )
+    return truncate_spin_dist_dict(spin_dist_dict,min_edge_size = min_edge_size)
 end
 
+
+function truncate_spin_dist_dict(spin_dist_dict;min_edge_size = 0)
+    """
+    truncate_spin_dist_dict() - take a spin_dist_dict from <calculate_hyperedge_spin_dist> and remove all hyperedges below a certian size
+    this is useful when you have size 2 hyperedges from the SBM and do not want to factor them into your calculation of cliques
+    """
+    spin_dist_dict = copy(spin_dist_dict)
+    edge_size_mask = spin_dist_dict[:hyperedge_size] .> min_edge_size
+    spin_dist_dict[:hyperedge_u] = spin_dist_dict[:hyperedge_u][edge_size_mask]
+    spin_dist_dict[:hyperedge_index] = spin_dist_dict[:hyperedge_index][edge_size_mask]
+    spin_dist_dict[:hyperedge_size] = spin_dist_dict[:hyperedge_size][edge_size_mask]
+    return spin_dist_dict
+end
 
 

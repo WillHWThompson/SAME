@@ -2,19 +2,15 @@
 using DrWatson
 """"
 ----------------------
-ISING MODEL FUNCTIONS
+VOTER MODEL FUNCTIONS
 ---------------------
 """
-
-function test2()
-    println("test")
-end
 
 
 abstract type VoterModel <: SpinModel end
 
 #mutable struct LinearVoterModel{S <: SpinNetwork}  <: SpinModel
-mutable struct LinearVoterModel{S <: SpinNetwork} 
+mutable struct LinearVoterModel{S <: SpinNetwork} <: VoterModel 
 """
 VoterModel: A strcut to store a voter model 
 inputs: 
@@ -32,7 +28,7 @@ Constructors
 """
 
 function linear_voter_model(spin_model::SpinNetwork)
-    return LinearVoterModel(spin_model,linear_voter_model)
+    return LinearVoterModel(spin_model,linear_voter_model_update)
 end
 
 
@@ -86,3 +82,6 @@ function run_model(d::Dict)
     end
     calculate_hyperedge_spin_dist(sn)
 end
+
+
+

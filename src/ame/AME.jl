@@ -8,7 +8,7 @@ function initialize_u0(N_individuals::Int,p_dist)
         p_dist: the probability distribution used to specify the clique size, from Distributions.jl
     """
     G = zeros(N_individuals,N_individuals)
-    @show G
+    #@show G
     G_Inds = CartesianIndices(G)
     G = map(inds -> G[inds[1],inds[2]] = my_binomial(inds[1],inds[2],p_dist),G_Inds)#generate the correct distribution for each occupation number
     G_norm = G ./sum(G)
@@ -34,6 +34,33 @@ function voter_model_ame_2(dG,G,t,p)
     map(index -> (dG[index[1],index[2]] = voter_model_ame_by_index(index[1],index[2],G,N,U)),MyCartesianIndex)
     return dG
 end
+
+
+
+
+function ρ(G,k_ex,type)
+    """
+    ρ - code for the moment closure
+    """
+    N,U  = size(G)
+    #track the sum of the numerator and the denomiator sepratley
+    numerator_sum = 0 
+    denominator_sum = 0 
+
+    for n_prime=1:N,u_prime=1:U
+        u  = u_prime-1
+        n = n_prime-1
+
+        if type == :up
+            numerator_sum += (n-u)G[n_prime,u_prime](u/n) 
+            denominator_sum += G[n_prime,u_prime]*(n-u)
+        elseif type == :down
+            numerator_sum += u*G[n_prime,u_prime]((n-u)/n) 
+            denominator_sum += G[n_prime,u_prime]*(u)
+        else
+            println("type not a valid - must be either ':up' or ':down'")
+        end
+    return k_ex* numerator/denominator
     
 function voter_model_ame!(dG,G,t,p)
     N,U  = size(G)
@@ -55,7 +82,7 @@ function voter_model_ame!(dG,G,t,p)
         (u < n) && (dG[n_prime,u_prime]+= G[n_prime,u_prime+1]*((u+1)*((n-u-1)/n)))#inwards downflip flux
         (u > 0) && (dG[n_prime,u_prime]+= G[n_prime,u_prime-1]*((n-u+1)*((u-1)/n)))#inwards upflip flux
     end
-    return dG 
+  #  return dG 
 end
 
 

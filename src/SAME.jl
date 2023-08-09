@@ -1,8 +1,9 @@
 module SAME
 using Graphs
 using Reexport
-@reexport using Random,Distributions,Graphs,Combinatorics
-@reexport using Revise
+using DataFrames
+@reexport using Random,Distributions,Graphs,Combinatorics,DifferentialEquations
+@reexport using Revise, Infiltrator
 
 export models,utils,graphs
 export Hypergraph,BipartiteGraph
@@ -19,8 +20,5 @@ export Hypergraph,BipartiteGraph
  include("utils/ModelUtils.jl")
  println("All files included")
  include("ame/AME.jl")
-
- greet() = println("hello world2")
-
 
 end # module SAME
