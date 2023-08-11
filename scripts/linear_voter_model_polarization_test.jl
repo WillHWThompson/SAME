@@ -1,5 +1,8 @@
 using DrWatson
-@quickactivate :SAME
+using Pkg
+#@quickactivate :_with_perturbSAME
+#@quickactivate :_with_perturbSAME
+Pkg.activate("/Users/willthompson/Documents/CSDS/MOCS2/package/SAME")
 using SAME
 using DataFrames
 using PlotlyJS
@@ -14,6 +17,7 @@ params = @strdict N_inds N_p N_groups M_p N_steps
 dicts = dict_list(params)
 for (i, d) in enumerate(dicts)
     @show i
+    @infiltrate
     f = SAME.run_model(d)
     savename_i = savename(dicts[i],"jld2")
     @show savename_i
