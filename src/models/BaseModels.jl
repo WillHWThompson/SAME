@@ -72,9 +72,6 @@ function init_spin_network(network;spin_pmf_dict= Dict(-1 =>1/2, 1 => 1/2),spin_
 end
 
 
-
-
-
 function get_spin_dist(my_vm,my_hypergraph::Hypergraph,my_vertex_attribues)
     bipartite_values = values(my_vertex_attribues)
     my_N_individuals = count(x->x==1,bipartite_values)
@@ -96,8 +93,13 @@ end
 
 #function run_model(my_model::SpinModel;num_steps = 1000) #change back when you get wifi, what is the problem
 function run_model(my_model;num_steps = 1000)
-    println(num_steps)
-    history = map(x ->my_model.update_rule(my_model),1:num_steps)
+    my_model_copy = deepcopy(my_model)
+    history = []
+    for i in 1:num_steps
+        my_model_copy = deepcopy(my_model_copy)
+        my_model_copy = my_model_copy.update_rule(my_model_copy)
+        push!(history,my_model_copy)
+    end
     return history
 end
 
@@ -114,9 +116,8 @@ function calculate_hyperedge_spin_dist(my_sn::SpinNetworkHyperGraph;min_edge_siz
     hyperedge_spin_excess = sum.(hyperedge_spin_values)
     hyperedge_size = length.(hyperedge_spin_values)#calculate the spin excess
 
-    hyperedge_u = (hyperedge_size - hyperedge_spin_excess)./2 #calcualte the number of up spins per hyper egde
+    hyperedge_u = (hyperedge_size + hyperedge_spin_excess)./2 #calcualte the number of up spins per hyper egde
     hyperedge_u = trunc.(Int,hyperedge_u)#round to an int
-
     #DataFrame(Dict(:hyperedge_index => hyperedge_index, :hyperedge_u => hyperedge_u,:hyperedge_size => hyperedge_size ))
     spin_dist_dict = Dict(:hyperedge_index => hyperedge_index, :hyperedge_u => hyperedge_u,:hyperedge_size => hyperedge_size )
     return truncate_spin_dist_dict(spin_dist_dict,min_edge_size = min_edge_size)

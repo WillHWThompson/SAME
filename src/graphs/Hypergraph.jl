@@ -80,7 +80,6 @@ function simple_graph(hgraph::Hypergraph)
     hedge = map(hyperedge -> combinations(hyperedge,2) |> collect,values(hgraph.edge_list))  
     hedge = vcat(hedge...) 
     hedge = map(x->Tuple(x),hedge)
-    @infiltrate 
     return simple_graph(hedge)
 end
 

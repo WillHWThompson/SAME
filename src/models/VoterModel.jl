@@ -43,16 +43,16 @@ function linear_voter_model_update(my_voter_model::VoterModel)
     refs: 
         http://physics.bu.edu/~redner/542/book/spin.pdf
     """
-    my_voter_model = deepcopy(my_voter_model)
+    #my_voter_model = deepcopy(my_voter_model)
     spin_idx = rand(1:nv(my_voter_model.spin_network.g))
 
     neighbor_spins = my_voter_model.spin_network.spin_vals[neighbors(my_voter_model.spin_network.g, spin_idx)]#get the neighboring spins
-   
     n_neighbors = length(neighbor_spins)
     if n_neighbors > 0
         new_spin = neighbor_spins[rand(1:n_neighbors)]#select a random spin value from neighbors
         my_voter_model.spin_network.spin_vals[spin_idx] = new_spin#select spin
     end
+
     return my_voter_model
 end
 
